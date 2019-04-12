@@ -104,6 +104,10 @@ impl Buffer {
     pub fn new() -> Self {
         Self { inner: Vec::new() }
     }
+
+    pub fn reserve(&mut self, size: usize) {
+        self.inner.reserve(size)
+    }
 }
 
 pub struct Encoder {
@@ -125,6 +129,7 @@ impl Encoder {
 
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.output_data.reserve(buf.len() * 24);
         for byte in buf {
             Char::new(*byte).write_into(&mut self.output_data)?;
         }

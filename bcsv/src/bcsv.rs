@@ -21,6 +21,7 @@ pub(crate) fn process<R: Read, W: Write, Processor: Read + Write>(
 
         writer.write_all(&output_buffer[0..size]).unwrap();
     }
+    writer.flush();
 }
 
 #[cfg(test)]
@@ -35,11 +36,11 @@ mod test {
     fn process_by_vec() {
         let mut input = vec![1u8, 2, 3, 4, 5];
         let mut reader = BufReader::new(&input[..]);
-        let mut writer = BufWriter::new(vec![0; 5]);
+        let mut writer = BufWriter::new(vec![0; 0]);
 
         let mut processor = Buffer::new();
 
-        process(&mut reader, &mut writer, &mut processor, &mut processor, 5, 5);
+        process(&mut reader, &mut writer, &mut processor, 5, 5);
 
         assert_eq!(writer.get_ref(), &vec![1u8, 2, 3, 4, 5]);
     }

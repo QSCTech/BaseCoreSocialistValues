@@ -25,8 +25,11 @@ pub(crate) fn process<R: Read, W: Write, Processor: Read + Write>(
 
 #[cfg(test)]
 mod test {
+    extern crate base_core_socialist_values;
+
     use super::*;
     use std::io::{BufReader, BufWriter};
+    use base_core_socialist_values::Buffer;
 
     #[test]
     fn process_by_vec() {
@@ -34,10 +37,9 @@ mod test {
         let mut reader = BufReader::new(&input[..]);
         let mut writer = BufWriter::new(vec![0; 5]);
 
-        let mut processor = vec![0u8; 5];
-        let mut processor = &mut processor[..];
+        let mut processor = Buffer::new();
 
-        process(&mut reader, &mut writer, &mut processor, 5, 5);
+        process(&mut reader, &mut writer, &mut processor, &mut processor, 5, 5);
 
         assert_eq!(writer.get_ref(), &vec![1u8, 2, 3, 4, 5]);
     }

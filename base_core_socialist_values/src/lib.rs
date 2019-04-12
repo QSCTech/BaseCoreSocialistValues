@@ -65,7 +65,7 @@ impl Char {
     }
 }
 
-struct Buffer {
+pub struct Buffer {
     inner: Vec<u8>,
 }
 
@@ -105,6 +105,12 @@ impl Write for Buffer {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+
+impl Buffer {
+    pub fn new() -> Self {
+        Self { inner: Vec::new() }
     }
 }
 

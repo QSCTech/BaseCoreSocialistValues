@@ -1,7 +1,5 @@
-[package]
-name = "base_core_socialist_values"
-version = "0.1.0"
-authors = ["Hexilee <hexileee@gmail.com>"]
-edition = "2018"
-
-[dependencies]
+[workspace]
+members = [
+    "base_core_socialist_values",
+    "bcsv"
+]

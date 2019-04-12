@@ -123,6 +123,14 @@ pub struct Decoder {
     output_data: Buffer,
 }
 
+impl Encoder {
+    pub fn new() -> Self {
+        Self {
+            output_data: Buffer::new(),
+        }
+    }
+}
+
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         for byte in buf {

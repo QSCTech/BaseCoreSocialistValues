@@ -1,6 +1,9 @@
 extern crate clap;
 use clap::{Arg, App};
-use std::io::{Read, BufReader};
+use std::io::{BufWriter, Read, BufReader};
+
+mod bcsv;
+use bcsv::{encode, decode};
 
 fn main() {
     let matches = App::new("BaseCoreSocialistValues")
@@ -33,6 +36,11 @@ With no FILE, or when FILE is -, read standard input.
         }
     };
     let reader = BufReader::new(reader);
+    let writer = BufWriter::new(std::io::stdout());
 
-    
+    if matches.is_present("decode") {
+        decode(reader, writer)
+    } else {
+        encode(reader, writer)
+    }
 }

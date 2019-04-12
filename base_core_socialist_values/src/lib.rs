@@ -20,6 +20,34 @@ lazy_static! {
     };
 }
 
+struct Char {
+    words: [&'static str; 3],
+    order: u8,
+}
+
+impl Char {
+    fn new(byte: u8) -> Self {
+        Self {
+            order: byte & 0b11,
+            words: [
+                WORD_SET[((byte >> 2) & 0b11) as usize],
+                WORD_SET[(4 + ((byte >> 4) & 0b11)) as usize],
+                WORD_SET[(8 + ((byte >> 6) & 0b11)) as usize],
+            ],
+        }
+    }
+
+    //    fn write_into(self, mut writer: impl Write) -> io::Result<usize> {
+    //        match self.order {
+    //            0 => for word in self.words {
+    //                writer.write_str(word)?;
+    //            }
+    //
+    //        }
+    //        Ok(24)
+    //    }
+}
+
 struct Buffer {
     inner: Vec<u8>,
 }

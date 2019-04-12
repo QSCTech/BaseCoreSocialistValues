@@ -37,15 +37,32 @@ impl Char {
         }
     }
 
-    //    fn write_into(self, mut writer: impl Write) -> io::Result<usize> {
-    //        match self.order {
-    //            0 => for word in self.words {
-    //                writer.write_str(word)?;
-    //            }
-    //
-    //        }
-    //        Ok(24)
-    //    }
+    fn write_into(self, mut writer: impl Write) -> io::Result<usize> {
+        match self.order {
+            0 => {
+                for word in self.words.iter() {
+                    writer.write_all(word.as_bytes())?;
+                }
+            }
+            1 => {
+                writer.write_all(self.words[1].as_bytes())?;
+                writer.write_all(self.words[0].as_bytes())?;
+                writer.write_all(self.words[2].as_bytes())?;
+            }
+            2 => {
+                writer.write_all(self.words[1].as_bytes())?;
+                writer.write_all(self.words[2].as_bytes())?;
+                writer.write_all(self.words[0].as_bytes())?;
+            }
+            3 => {
+                writer.write_all(self.words[2].as_bytes())?;
+                writer.write_all(self.words[1].as_bytes())?;
+                writer.write_all(self.words[0].as_bytes())?;
+            }
+            _ => unreachable!(),
+        }
+        Ok(24)
+    }
 }
 
 struct Buffer {
@@ -102,16 +119,19 @@ pub struct Decoder {
 
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        unimplemented!()
+        for byte in buf {
+            Char::new(*byte).write_into(&mut self.output_data)?;
+        }
+        Ok(buf.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        unimplemented!()
+        self.output_data.flush()
     }
 }
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        unimplemented!()
+        self.output_data.read(buf)
     }
 }

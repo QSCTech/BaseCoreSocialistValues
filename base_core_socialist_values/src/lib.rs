@@ -92,15 +92,7 @@ impl Read for Buffer {
 
 impl Write for Buffer {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let space = self.inner.capacity() - self.inner.len();
-        if space < buf.len() {
-            self.inner.reserve(buf.len() - space);
-        }
-        unsafe {
-            self.inner.set_len(self.inner.len() + buf.len());
-        }
-        self.inner.as_mut_slice()[..buf.len()].copy_from_slice(buf);
-        Ok(buf.len())
+        self.inner.write(buf)
     }
 
     fn flush(&mut self) -> io::Result<()> {

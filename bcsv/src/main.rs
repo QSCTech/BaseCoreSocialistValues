@@ -1,9 +1,11 @@
 extern crate clap;
+extern crate base_core_socialist_values;
 use clap::{App, Arg};
 use std::io::{BufReader, BufWriter, Read};
 
 mod bcsv;
 use bcsv::process;
+use base_core_socialist_values::Encoder;
 
 const ENC_BLOCK_SIZE: usize = 1024 * 3 * 10;
 const DEC_BLOCK_SIZE: usize = 1024 * 5;
@@ -45,12 +47,13 @@ With no FILE, or when FILE is -, read standard input.
             }
         }
     };
-    let reader = BufReader::new(reader);
-    let writer = BufWriter::new(std::io::stdout());
+    let mut reader = BufReader::new(reader);
+    let mut writer = BufWriter::new(std::io::stdout());
 
     if matches.is_present("decode") {
         //        process(reader, writer, unimplemented!(), input_buffer, output_buffer);
     } else {
-        //       process(reader, writer, unimplemented!(), input_buffer, output_buffer);
+        let mut encoder = Encoder::new();
+        process(&mut reader, &mut writer, &mut encoder, BCSV_LEN(DEC_BLOCK_SIZE), DEC_BLOCK_SIZE);
     }
 }

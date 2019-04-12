@@ -1,4 +1,24 @@
+#[macro_use]
+extern crate lazy_static;
+
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
+use std::mem::replace;
+
+const WORD_SET: [&'static str; 12] = [
+    "富强", "民主", "文明", "和谐", "自由", "平等", "公正", "法治", "爱国",
+    "敬业", "诚信", "友善",
+];
+
+lazy_static! {
+    static ref WORD_MAP: HashMap<&'static str, usize> = {
+        let mut map = HashMap::new();
+        for (index, word) in WORD_SET.iter().enumerate() {
+            map.insert(*word, index);
+        }
+        map
+    };
+}
 
 struct Buffer {
     inner: Vec<u8>,
@@ -14,7 +34,8 @@ impl Read for Buffer {
             Ok(size)
         } else {
             buf.copy_from_slice(&self.inner[..buf.len()]);
-            let header = Box::into_raw(self.inner.into_boxed_slice());
+            let header =
+                Box::into_raw(replace(&mut self.inner, Vec::new()).into_boxed_slice()) as *mut u8;
             let new_header = unsafe { header.offset(buf.len() as isize) };
             unsafe { drop(Vec::from_raw_parts(header, buf.len(), buf.len())) };
             self.inner =
@@ -43,11 +64,13 @@ impl Write for Buffer {
 }
 
 pub struct Encoder {
-    input_buf: Vec<u8>,
-    output_data: Vec<u8>,
+    output_data: Buffer,
 }
 
-pub struct Decoder {}
+pub struct Decoder {
+    input_buf: Buffer,
+    output_data: Buffer,
+}
 
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {

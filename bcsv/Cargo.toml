@@ -1,6 +1,6 @@
 [package]
 name = "bcsv"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Hexilee <hexileee@gmail.com>", "YangKeao <keao.yang@yahoo.com>"]
 edition = "2018"
 description = "CLI for base_core_socialist_values"

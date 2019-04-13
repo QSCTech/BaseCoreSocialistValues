@@ -2,8 +2,8 @@
 extern crate lazy_static;
 
 use std::collections::HashMap;
-use std::io::{self, Read, Write};
-use std::mem::replace;
+use std::convert::TryFrom;
+use std::io::{self, ErrorKind, Read, Write};
 
 const WORD_SET: [&'static str; 12] = [
     "富强", "民主", "文明", "和谐", "自由", "平等", "公正", "法治", "爱国",
@@ -55,31 +55,7 @@ impl<'a> Char<'a> {
         }
     }
 
-    fn new_from_bcsv(bytes: &'a [u8; 18]) -> Self {
-        let str = std::str::from_utf8(bytes).unwrap();
-        let order = detect_order(&str);
-        match order {
-            0 => Self {
-                order: detect_order(&str),
-                words: [&str[0..6], &str[6..12], &str[12..18]],
-            },
-            1 => Self {
-                order: detect_order(&str),
-                words: [&str[6..12], &str[0..6], &str[12..18]],
-            },
-            2 => Self {
-                order: detect_order(&str),
-                words: [&str[12..18], &str[0..6], &str[6..12]],
-            },
-            3 => Self {
-                order: detect_order(&str),
-                words: [&str[12..18], &str[6..12], &str[0..6]],
-            },
-            _ => unreachable!(),
-        }
-    }
-
-    fn write_into(self, mut writer: impl Write) -> io::Result<usize> {
+    fn encode_into(self, mut writer: impl Write) -> io::Result<usize> {
         match self.order {
             0 => {
                 for word in self.words.iter() {
@@ -106,13 +82,43 @@ impl<'a> Char<'a> {
         Ok(24)
     }
 
-    fn read_into(&self, mut writer: impl Write) -> io::Result<usize> {
+    fn decode_into(&self, mut writer: impl Write) -> io::Result<usize> {
         let byte = self.order
             + ((WORD_MAP.get(self.words[0]).unwrap() % 4) << 2) as u8
             + ((WORD_MAP.get(self.words[1]).unwrap() % 4) << 4) as u8
             + ((WORD_MAP.get(self.words[2]).unwrap() % 4) << 6) as u8;
         writer.write_all(&[byte])?;
         Ok(1)
+    }
+}
+
+impl<'a> TryFrom<&'a [u8; 18]> for Char<'a> {
+    type Error = io::Error;
+    fn try_from(bytes: &'a [u8; 18]) -> Result<Self, Self::Error> {
+        let str = std::str::from_utf8(bytes).unwrap();
+        let order = detect_order(&str);
+        Ok(match order {
+            0 => Self {
+                order: detect_order(&str),
+                words: [&str[0..6], &str[6..12], &str[12..18]],
+            },
+            1 => Self {
+                order: detect_order(&str),
+                words: [&str[6..12], &str[0..6], &str[12..18]],
+            },
+            2 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[0..6], &str[6..12]],
+            },
+            3 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[6..12], &str[0..6]],
+            },
+            _ => Err(io::Error::new(
+                ErrorKind::InvalidInput,
+                "invalid input data",
+            ))?,
+        })
     }
 }
 
@@ -123,7 +129,6 @@ pub struct Buffer {
 impl Read for Buffer {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let size = self.inner.len();
-        let cap = self.inner.capacity();
         if size <= buf.len() {
             buf[..size].copy_from_slice(self.inner.as_slice());
             self.inner = Vec::new();
@@ -160,70 +165,61 @@ impl Buffer {
     }
 }
 
-pub struct Encoder {
-    output_data: Buffer,
+pub struct Encoder<W: Write> {
+    writer: W,
 }
 
-pub struct Decoder {
+pub struct Decoder<W: Write> {
     input_buf: Buffer,
-    output_data: Buffer,
+    writer: W,
 }
 
-impl Encoder {
-    pub fn new() -> Self {
-        Self {
-            output_data: Buffer::new(),
-        }
+impl<W: Write> Encoder<W> {
+    pub fn new(writer: W) -> Self {
+        Self { writer }
     }
 }
 
-impl Decoder {
-    pub fn new() -> Self {
+impl<W: Write> Decoder<W> {
+    pub fn new(writer: W) -> Self {
         Self {
             input_buf: Buffer::new(),
-            output_data: Buffer::new(),
+            writer,
         }
     }
 }
 
-impl Write for Encoder {
+impl<W: Write> Write for Encoder<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.output_data.reserve(buf.len() * 24);
         for byte in buf {
-            Char::new(*byte).write_into(&mut self.output_data)?;
+            Char::new(*byte).encode_into(&mut self.writer)?;
         }
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        self.output_data.flush()
+        self.writer.flush()
     }
 }
 
-impl Read for Encoder {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.output_data.read(buf)
-    }
-}
-
-impl Write for Decoder {
+impl<W: Write> Write for Decoder<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input_buf.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.input_buf.flush()
-    }
-}
-
-impl Read for Decoder {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let bytes = self.input_buf.write(buf)?;
         while self.input_buf.len() > 18 {
             let mut bytes = [0; 18];
             self.input_buf.read_exact(&mut bytes)?;
-
-            Char::new_from_bcsv(&bytes).read_into(&mut self.output_data)?;
+            Char::try_from(&bytes)?.decode_into(&mut self.writer)?;
         }
-        self.output_data.read(buf)
+        Ok(bytes)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        if self.input_buf.len() != 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "input buffer doesn't be flushed",
+            ));
+        }
+        self.writer.flush()
     }
 }

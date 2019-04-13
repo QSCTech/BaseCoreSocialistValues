@@ -1,7 +1,7 @@
 [package]
 name = "base_core_socialist_values"
 version = "0.1.0"
-authors = ["Hexilee <hexileee@gmail.com>"]
+authors = ["Hexilee <hexileee@gmail.com>", "YangKeao keao.yang@yahoo.com"]
 edition = "2018"
 
 [dependencies]

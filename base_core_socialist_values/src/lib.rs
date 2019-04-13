@@ -38,12 +38,12 @@ fn detect_order(str: &str) -> u8 {
     }
 }
 
-struct Char {
-    words: [&'static str; 3],
+struct Char<'a> {
+    words: [&'a str; 3],
     order: u8,
 }
 
-impl Char {
+impl<'a> Char<'a> {
     fn new(byte: u8) -> Self {
         Self {
             order: byte & 0b11,
@@ -55,8 +55,8 @@ impl Char {
         }
     }
 
-    fn new_from_bcsv(bytes: [u8; 3]) -> Self {
-        let str = String::from_utf8(bytes.to_vec()).unwrap();
+    fn new_from_bcsv(bytes: &'a [u8; 3]) -> Self {
+        let str = std::str::from_utf8(bytes).unwrap();
         Self {
             order: detect_order(&str),
             words: [
@@ -188,6 +188,15 @@ impl Encoder {
     }
 }
 
+impl Decoder {
+    pub fn new() -> Self {
+        Self {
+            input_buf: Buffer::new(),
+            output_data: Buffer::new(),
+        }
+    }
+}
+
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.output_data.reserve(buf.len() * 24);
@@ -224,7 +233,7 @@ impl Read for Decoder {
             let mut bytes = [0;3];
             self.input_buf.read_exact(&mut bytes)?;
 
-            Char::new_from_bcsv(bytes).read_into(&mut self.output_data)?;
+            Char::new_from_bcsv(&bytes).read_into(&mut self.output_data)?;
         }
         self.output_data.read(buf)
     }

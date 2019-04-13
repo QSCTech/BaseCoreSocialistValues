@@ -21,9 +21,9 @@ lazy_static! {
 }
 
 fn detect_order(str: &str) -> u8 {
-    let index1 = WORD_MAP.get(&str[0..1]).unwrap() - 0;
-    let index2 = WORD_MAP.get(&str[1..2]).unwrap() - 4;
-    let index3 = WORD_MAP.get(&str[2..3]).unwrap() - 8;
+    let index1 = WORD_MAP.get(&str[0..6]).unwrap() / 4;
+    let index2 = WORD_MAP.get(&str[6..12]).unwrap() / 4;
+    let index3 = WORD_MAP.get(&str[12..18]).unwrap() / 4;
 
     if index1 == 1 && index2 == 0 && index3 == 2 {
         1
@@ -55,14 +55,14 @@ impl<'a> Char<'a> {
         }
     }
 
-    fn new_from_bcsv(bytes: &'a [u8; 3]) -> Self {
+    fn new_from_bcsv(bytes: &'a [u8; 18]) -> Self {
         let str = std::str::from_utf8(bytes).unwrap();
         Self {
             order: detect_order(&str),
             words: [
-                &str[0..1],
-                &str[1..2],
-                &str[2..3]
+                &str[0..6],
+                &str[6..12],
+                &str[12..18]
             ],
         }
     }
@@ -229,8 +229,8 @@ impl Write for Decoder {
 
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        while self.input_buf.len() > 3 {
-            let mut bytes = [0;3];
+        while self.input_buf.len() > 18 {
+            let mut bytes = [0;18];
             self.input_buf.read_exact(&mut bytes)?;
 
             Char::new_from_bcsv(&bytes).read_into(&mut self.output_data)?;

@@ -136,12 +136,7 @@ impl Read for Buffer {
             Ok(size)
         } else {
             buf.copy_from_slice(&self.inner[..buf.len()]);
-            let header =
-                Box::into_raw(replace(&mut self.inner, Vec::new()).into_boxed_slice()) as *mut u8;
-            let new_header = unsafe { header.offset(buf.len() as isize) };
-            unsafe { drop(Vec::from_raw_parts(header, buf.len(), buf.len())) };
-            self.inner =
-                unsafe { Vec::from_raw_parts(new_header, size - buf.len(), cap - buf.len()) };
+            self.inner.drain(..buf.len());
             Ok(buf.len())
         }
     }

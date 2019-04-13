@@ -29,8 +29,8 @@ mod test {
     extern crate base_core_socialist_values;
 
     use super::*;
-    use std::io::{BufReader, BufWriter};
     use base_core_socialist_values::Buffer;
+    use std::io::{BufReader, BufWriter};
 
     #[test]
     fn process_by_vec() {

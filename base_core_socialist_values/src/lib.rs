@@ -20,12 +20,30 @@ lazy_static! {
     };
 }
 
-struct Char {
-    words: [&'static str; 3],
+fn detect_order(str: &str) -> u8 {
+    let index1 = WORD_MAP.get(&str[0..6]).unwrap() / 4;
+    let index2 = WORD_MAP.get(&str[6..12]).unwrap() / 4;
+    let index3 = WORD_MAP.get(&str[12..18]).unwrap() / 4;
+
+    if index1 == 1 && index2 == 0 && index3 == 2 {
+        1
+    } else if index1 == 1 && index2 == 2 && index3 == 0 {
+        2
+    } else if index1 == 2 && index2 == 1 && index3 == 0 {
+        3
+    } else if index1 == 0 && index2 == 1 && index3 == 2 {
+        0
+    } else {
+        unreachable!()
+    }
+}
+
+struct Char<'a> {
+    words: [&'a str; 3],
     order: u8,
 }
 
-impl Char {
+impl<'a> Char<'a> {
     fn new(byte: u8) -> Self {
         Self {
             order: byte & 0b11,
@@ -34,6 +52,30 @@ impl Char {
                 WORD_SET[(4 + ((byte >> 4) & 0b11)) as usize],
                 WORD_SET[(8 + ((byte >> 6) & 0b11)) as usize],
             ],
+        }
+    }
+
+    fn new_from_bcsv(bytes: &'a [u8; 18]) -> Self {
+        let str = std::str::from_utf8(bytes).unwrap();
+        let order = detect_order(&str);
+        match order {
+            0 => Self {
+                order: detect_order(&str),
+                words: [&str[0..6], &str[6..12], &str[12..18]],
+            },
+            1 => Self {
+                order: detect_order(&str),
+                words: [&str[6..12], &str[0..6], &str[12..18]],
+            },
+            2 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[0..6], &str[6..12]],
+            },
+            3 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[6..12], &str[0..6]],
+            },
+            _ => unreachable!(),
         }
     }
 
@@ -63,6 +105,15 @@ impl Char {
         }
         Ok(24)
     }
+
+    fn read_into(&self, mut writer: impl Write) -> io::Result<usize> {
+        let byte = self.order
+            + ((WORD_MAP.get(self.words[0]).unwrap() % 4) << 2) as u8
+            + ((WORD_MAP.get(self.words[1]).unwrap() % 4) << 4) as u8
+            + ((WORD_MAP.get(self.words[2]).unwrap() % 4) << 6) as u8;
+        writer.write_all(&[byte])?;
+        Ok(1)
+    }
 }
 
 pub struct Buffer {
@@ -79,12 +130,7 @@ impl Read for Buffer {
             Ok(size)
         } else {
             buf.copy_from_slice(&self.inner[..buf.len()]);
-            let header =
-                Box::into_raw(replace(&mut self.inner, Vec::new()).into_boxed_slice()) as *mut u8;
-            let new_header = unsafe { header.offset(buf.len() as isize) };
-            unsafe { drop(Vec::from_raw_parts(header, buf.len(), buf.len())) };
-            self.inner =
-                unsafe { Vec::from_raw_parts(new_header, size - buf.len(), cap - buf.len()) };
+            self.inner.drain(..buf.len());
             Ok(buf.len())
         }
     }
@@ -108,6 +154,10 @@ impl Buffer {
     pub fn reserve(&mut self, size: usize) {
         self.inner.reserve(size)
     }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
 }
 
 pub struct Encoder {
@@ -122,6 +172,15 @@ pub struct Decoder {
 impl Encoder {
     pub fn new() -> Self {
         Self {
+            output_data: Buffer::new(),
+        }
+    }
+}
+
+impl Decoder {
+    pub fn new() -> Self {
+        Self {
+            input_buf: Buffer::new(),
             output_data: Buffer::new(),
         }
     }
@@ -143,6 +202,28 @@ impl Write for Encoder {
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.output_data.read(buf)
+    }
+}
+
+impl Write for Decoder {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.input_buf.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.input_buf.flush()
+    }
+}
+
+impl Read for Decoder {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        while self.input_buf.len() > 18 {
+            let mut bytes = [0; 18];
+            self.input_buf.read_exact(&mut bytes)?;
+
+            Char::new_from_bcsv(&bytes).read_into(&mut self.output_data)?;
+        }
         self.output_data.read(buf)
     }
 }

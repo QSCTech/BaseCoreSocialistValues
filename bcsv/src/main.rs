@@ -52,7 +52,7 @@ With no FILE, or when FILE is -, read standard input.
 
     if matches.is_present("decode") {
         let mut decoder = Decoder::new();
-        process(&mut reader, &mut writer, &mut decoder, ENC_BLOCK_SIZE, BCSV_LEN(ENC_BLOCK_SIZE));
+        process(&mut reader, &mut writer, &mut decoder, BCSV_LEN(DEC_BLOCK_SIZE), DEC_BLOCK_SIZE);
     } else {
         let mut encoder = Encoder::new();
         process(&mut reader, &mut writer, &mut encoder, ENC_BLOCK_SIZE, BCSV_LEN(ENC_BLOCK_SIZE));

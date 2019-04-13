@@ -2,7 +2,7 @@ extern crate base_core_socialist_values;
 extern crate clap;
 use base_core_socialist_values::{Decoder, Encoder};
 use clap::{App, Arg};
-use std::io::{copy, BufReader, Read, Write, Result};
+use std::io::{copy, BufReader, Read, Result, Write};
 
 fn main() -> Result<()> {
     let matches = App::new("BaseCoreSocialistValues")

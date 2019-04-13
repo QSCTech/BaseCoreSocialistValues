@@ -2,7 +2,7 @@ extern crate base_core_socialist_values;
 extern crate clap;
 use base_core_socialist_values::{Decoder, Encoder};
 use clap::{App, Arg};
-use std::io::{copy, BufReader, BufWriter, Read, Write};
+use std::io::{copy, BufReader, BufWriter, Read};
 
 fn main() {
     let matches = App::new("BaseCoreSocialistValues")
@@ -48,5 +48,4 @@ With no FILE, or when FILE is -, read standard input.
     } else {
         copy(&mut reader, &mut Encoder::new(&mut writer)).unwrap();
     }
-    writer.flush().unwrap();
 }

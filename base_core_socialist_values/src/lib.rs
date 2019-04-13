@@ -205,7 +205,7 @@ impl<W: Write> Write for Encoder<W> {
 impl<W: Write> Write for Decoder<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let bytes = self.input_buf.write(buf)?;
-        while self.input_buf.len() > 18 {
+        while self.input_buf.len() >= 18 {
             let mut bytes = [0; 18];
             self.input_buf.read_exact(&mut bytes)?;
             Char::try_from(&bytes)?.decode_into(&mut self.writer)?;

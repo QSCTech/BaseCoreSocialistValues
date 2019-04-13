@@ -8,4 +8,4 @@ license = "MIT"
 
 [dependencies]
 clap = "2.33.0"
-base_core_socialist_values = {path="../base_core_socialist_values", version="0.2"}
+base_core_socialist_values = {path="../base_core_socialist_values", version="0.3"}

@@ -1,5 +1,4 @@
-use std::io::{BufRead, BufReader, BufWriter, Read, Write};
-use std::thread;
+use std::io::{BufReader, BufWriter, Read, Write};
 
 pub(crate) fn process<R: Read, W: Write, Processor: Read + Write>(
     reader: &mut BufReader<R>,
@@ -21,7 +20,7 @@ pub(crate) fn process<R: Read, W: Write, Processor: Read + Write>(
 
         writer.write_all(&output_buffer[0..size]).unwrap();
     }
-    writer.flush();
+    writer.flush().unwrap();
 }
 
 #[cfg(test)]
@@ -34,7 +33,7 @@ mod test {
 
     #[test]
     fn process_by_vec() {
-        let mut input = vec![1u8, 2, 3, 4, 5];
+        let input = vec![1u8, 2, 3, 4, 5];
         let mut reader = BufReader::new(&input[..]);
         let mut writer = BufWriter::new(vec![0; 0]);
 

@@ -10,7 +10,7 @@ use bcsv::process;
 const ENC_BLOCK_SIZE: usize = 1024 * 3 * 10;
 const DEC_BLOCK_SIZE: usize = 1024 * 5;
 
-const fn BCSV_LEN(len: usize) -> usize {
+const fn bcsv_len(len: usize) -> usize {
     return len * 18;
 }
 
@@ -24,7 +24,7 @@ fn main() {
                 .long("decode")
                 .help("decode data"),
         )
-        .arg(Arg::with_name("FILE").required(true))
+        .arg(Arg::with_name("FILE"))
         .about(
             r#"
 BaseCoreSocialistValues encode or decode FILE, or standard input, to standard output.
@@ -34,7 +34,10 @@ With no FILE, or when FILE is -, read standard input.
         )
         .get_matches();
 
-    let file_name = matches.value_of("FILE").unwrap();
+    let file_name = match matches.value_of("FILE") {
+        Some(filename) => filename,
+        None => "-"
+    };
 
     let reader: Box<Read> = if file_name == "-" {
         Box::new(std::io::stdin())
@@ -56,7 +59,7 @@ With no FILE, or when FILE is -, read standard input.
             &mut reader,
             &mut writer,
             &mut decoder,
-            BCSV_LEN(DEC_BLOCK_SIZE),
+            bcsv_len(DEC_BLOCK_SIZE),
             DEC_BLOCK_SIZE,
         );
     } else {
@@ -66,7 +69,7 @@ With no FILE, or when FILE is -, read standard input.
             &mut writer,
             &mut encoder,
             ENC_BLOCK_SIZE,
-            BCSV_LEN(ENC_BLOCK_SIZE),
+            bcsv_len(ENC_BLOCK_SIZE),
         );
     }
 }

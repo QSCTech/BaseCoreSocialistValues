@@ -57,13 +57,25 @@ impl<'a> Char<'a> {
 
     fn new_from_bcsv(bytes: &'a [u8; 18]) -> Self {
         let str = std::str::from_utf8(bytes).unwrap();
-        Self {
-            order: detect_order(&str),
-            words: [
-                &str[0..6],
-                &str[6..12],
-                &str[12..18]
-            ],
+        let order = detect_order(&str);
+        match order {
+            0 => Self {
+                order: detect_order(&str),
+                words: [&str[0..6], &str[6..12], &str[12..18]],
+            },
+            1 => Self {
+                order: detect_order(&str),
+                words: [&str[6..12], &str[0..6], &str[12..18]],
+            },
+            2 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[0..6], &str[6..12]],
+            },
+            3 => Self {
+                order: detect_order(&str),
+                words: [&str[12..18], &str[6..12], &str[0..6]],
+            },
+            _ => unreachable!(),
         }
     }
 
@@ -95,30 +107,12 @@ impl<'a> Char<'a> {
     }
 
     fn read_into(&self, mut writer: impl Write) -> io::Result<usize> {
-         match self.order {
-            0 => {
-                writer.write_all(&[*WORD_MAP.get(self.words[0]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[1]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[2]).unwrap() as u8]);
-            }
-            1 => {
-                writer.write_all(&[*WORD_MAP.get(self.words[1]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[0]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[2]).unwrap() as u8]);
-            }
-            2 => {
-                writer.write_all(&[*WORD_MAP.get(self.words[1]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[2]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[0]).unwrap() as u8]);
-            }
-            3 => {
-                writer.write_all(&[*WORD_MAP.get(self.words[2]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[1]).unwrap() as u8]);
-                writer.write_all(&[*WORD_MAP.get(self.words[0]).unwrap() as u8]);
-            }
-            _ => unreachable!(),
-        }
-        Ok(24)   
+        let byte = self.order
+            + ((WORD_MAP.get(self.words[0]).unwrap() % 4) << 2) as u8
+            + ((WORD_MAP.get(self.words[1]).unwrap() % 4) << 4) as u8
+            + ((WORD_MAP.get(self.words[2]).unwrap() % 4) << 6) as u8;
+        writer.write_all(&[byte])?;
+        Ok(1)
     }
 }
 
@@ -225,7 +219,7 @@ impl Write for Decoder {
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         while self.input_buf.len() > 18 {
-            let mut bytes = [0;18];
+            let mut bytes = [0; 18];
             self.input_buf.read_exact(&mut bytes)?;
 
             Char::new_from_bcsv(&bytes).read_into(&mut self.output_data)?;

@@ -1,18 +1,8 @@
 extern crate base_core_socialist_values;
 extern crate clap;
-use clap::{App, Arg};
-use std::io::{BufReader, BufWriter, Read};
-
-mod bcsv;
 use base_core_socialist_values::{Decoder, Encoder};
-use bcsv::process;
-
-const ENC_BLOCK_SIZE: usize = 1024 * 3 * 10;
-const DEC_BLOCK_SIZE: usize = 1024 * 5;
-
-const fn bcsv_len(len: usize) -> usize {
-    return len * 18;
-}
+use clap::{App, Arg};
+use std::io::{copy, BufReader, BufWriter, Read, Write};
 
 fn main() {
     let matches = App::new("BaseCoreSocialistValues")
@@ -36,7 +26,7 @@ With no FILE, or when FILE is -, read standard input.
 
     let file_name = match matches.value_of("FILE") {
         Some(filename) => filename,
-        None => "-"
+        None => "-",
     };
 
     let reader: Box<Read> = if file_name == "-" {
@@ -54,22 +44,9 @@ With no FILE, or when FILE is -, read standard input.
     let mut writer = BufWriter::new(std::io::stdout());
 
     if matches.is_present("decode") {
-        let mut decoder = Decoder::new();
-        process(
-            &mut reader,
-            &mut writer,
-            &mut decoder,
-            bcsv_len(DEC_BLOCK_SIZE),
-            DEC_BLOCK_SIZE,
-        );
+        copy(&mut reader, &mut Decoder::new(&mut writer)).unwrap();
     } else {
-        let mut encoder = Encoder::new();
-        process(
-            &mut reader,
-            &mut writer,
-            &mut encoder,
-            ENC_BLOCK_SIZE,
-            bcsv_len(ENC_BLOCK_SIZE),
-        );
+        copy(&mut reader, &mut Encoder::new(&mut writer)).unwrap();
     }
+    writer.flush().unwrap();
 }

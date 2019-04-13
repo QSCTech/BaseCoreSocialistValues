@@ -161,10 +161,40 @@ impl Buffer {
     }
 }
 
+//! The Encoder
+//!
+//! # Example
+//!
+//! ```ignore
+//! use base_core_socialist_values::Encoder;
+//! use std::io::{self, stdin, stdout};
+//!
+//! fn main() -> io::Result<()> {
+//!     let mut reader = stdin();
+//!     let mut writer = stdout();
+//!     io::copy(&mut reader, &mut Encoder::new(&mut writer))?;
+//!     Ok(())
+//! }
+//! ```
 pub struct Encoder<W: Write> {
     writer: W,
 }
 
+//! The Decoder
+//!
+//! # Example
+//!
+//! ```ignore
+//! use base_core_socialist_values::Decoder;
+//! use std::io::{self, stdin, stdout};
+//!
+//! fn main() -> io::Result<()> {
+//!     let mut reader = stdin();
+//!     let mut writer = stdout();
+//!     io::copy(&mut reader, &mut Decoder::new(&mut writer))?;
+//!     Ok(())
+//! }
+//! ```
 pub struct Decoder<W: Write> {
     input_buf: Buffer,
     writer: W,

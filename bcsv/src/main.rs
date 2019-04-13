@@ -2,9 +2,9 @@ extern crate base_core_socialist_values;
 extern crate clap;
 use base_core_socialist_values::{Decoder, Encoder};
 use clap::{App, Arg};
-use std::io::{copy, BufReader, BufWriter, Read};
+use std::io::{copy, BufReader, Read, Write, Result};
 
-fn main() {
+fn main() -> Result<()> {
     let matches = App::new("BaseCoreSocialistValues")
         .version("0.1.0")
         .author("YangKeao keao.yang@yahoo.com")
@@ -41,11 +41,15 @@ With no FILE, or when FILE is -, read standard input.
         }
     };
     let mut reader = BufReader::new(reader);
-    let mut writer = BufWriter::new(std::io::stdout());
+    let mut writer = std::io::stdout();
 
     if matches.is_present("decode") {
-        copy(&mut reader, &mut Decoder::new(&mut writer)).unwrap();
+        let mut decoder = Decoder::new(&mut writer);
+        copy(&mut reader, &mut decoder).unwrap();
+        decoder.flush()
     } else {
-        copy(&mut reader, &mut Encoder::new(&mut writer)).unwrap();
+        let mut encoder = Encoder::new(&mut writer);
+        copy(&mut reader, &mut encoder).unwrap();
+        encoder.flush()
     }
 }

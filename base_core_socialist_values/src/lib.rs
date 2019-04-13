@@ -122,7 +122,7 @@ impl<'a> TryFrom<&'a [u8; 18]> for Char<'a> {
     }
 }
 
-pub struct Buffer {
+struct Buffer {
     inner: Vec<u8>,
 }
 
@@ -152,15 +152,11 @@ impl Write for Buffer {
 }
 
 impl Buffer {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self { inner: Vec::new() }
     }
 
-    pub fn reserve(&mut self, size: usize) {
-        self.inner.reserve(size)
-    }
-
-    pub fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.inner.len()
     }
 }

@@ -24,7 +24,7 @@ fn main() {
                 .long("decode")
                 .help("decode data"),
         )
-        .arg(Arg::with_name("FILE").required(true))
+        .arg(Arg::with_name("FILE"))
         .about(
             r#"
 BaseCoreSocialistValues encode or decode FILE, or standard input, to standard output.
@@ -34,7 +34,10 @@ With no FILE, or when FILE is -, read standard input.
         )
         .get_matches();
 
-    let file_name = matches.value_of("FILE").unwrap();
+    let file_name = match matches.value_of("FILE") {
+        Some(filename) => filename,
+        None => "-"
+    };
 
     let reader: Box<Read> = if file_name == "-" {
         Box::new(std::io::stdin())

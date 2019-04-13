@@ -10,7 +10,7 @@ use bcsv::process;
 const ENC_BLOCK_SIZE: usize = 1024 * 3 * 10;
 const DEC_BLOCK_SIZE: usize = 1024 * 5;
 
-const fn BCSV_LEN(len: usize) -> usize {
+const fn bcsv_len(len: usize) -> usize {
     return len * 18;
 }
 
@@ -56,7 +56,7 @@ With no FILE, or when FILE is -, read standard input.
             &mut reader,
             &mut writer,
             &mut decoder,
-            BCSV_LEN(DEC_BLOCK_SIZE),
+            bcsv_len(DEC_BLOCK_SIZE),
             DEC_BLOCK_SIZE,
         );
     } else {
@@ -66,7 +66,7 @@ With no FILE, or when FILE is -, read standard input.
             &mut writer,
             &mut encoder,
             ENC_BLOCK_SIZE,
-            BCSV_LEN(ENC_BLOCK_SIZE),
+            bcsv_len(ENC_BLOCK_SIZE),
         );
     }
 }

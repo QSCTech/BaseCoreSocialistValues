@@ -1,6 +1,6 @@
 [package]
 name = "base_core_socialist_values"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Hexilee <hexileee@gmail.com>", "YangKeao <keao.yang@yahoo.com>"]
 edition = "2018"
 description = "Encode and decode with BCSV (base core socialist values)"

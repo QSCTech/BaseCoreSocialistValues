@@ -14,6 +14,7 @@ Let the evil man in the middle know WHAT WE BELIEVE IN :)
 ### `base_core_socialist_values`
 [![Crate version](https://img.shields.io/crates/v/base_core_socialist_values.svg)](https://crates.io/crates/base_core_socialist_values)
 [![Rust Docs](https://docs.rs/base_core_socialist_values/badge.svg)](https://docs.rs/base_core_socialist_values)
+[![NPM version](https://img.shields.io/npm/v/base_core_socialist_values.svg)](https://www.npmjs.com/package/base_core_socialist_values)
 
 The Library
 

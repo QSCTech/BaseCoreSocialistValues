@@ -1,3 +1,6 @@
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -213,6 +216,9 @@ impl<W: Write> Encoder<W> {
     pub fn new(writer: W) -> Self {
         Self { writer }
     }
+    pub fn get_writer(self) -> W {
+        self.writer
+    }
 }
 
 impl<W: Write> Decoder<W> {
@@ -221,6 +227,9 @@ impl<W: Write> Decoder<W> {
             input_buf: Buffer::new(),
             writer,
         }
+    }
+    pub fn get_writer(self) -> W {
+        self.writer
     }
 }
 
@@ -304,4 +313,22 @@ impl<W: Write> Write for Decoder<W> {
         }
         self.writer.flush()
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn encode(str: &str) -> String {
+    let mut encoder = Encoder::new(Vec::new());
+    encoder.write_all(str.as_bytes()).unwrap();
+
+    String::from_utf8(encoder.get_writer()).unwrap()
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn decode(str: &str) -> String {
+    let mut decoder = Decoder::new(Vec::new());
+    decoder.write_all(str.as_bytes()).unwrap();
+
+    String::from_utf8(decoder.get_writer()).unwrap()
 }

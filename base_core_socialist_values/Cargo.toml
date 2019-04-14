@@ -11,6 +11,12 @@ categories = ["encoding", "decoding"]
 readme = "README.md"
 documentation = "https://docs.rs/base_core_socialist_values"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 lazy_static = "1.3.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+

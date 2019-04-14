@@ -330,5 +330,5 @@ pub fn decode(str: &str) -> String {
     let mut decoder = Decoder::new(Vec::new());
     decoder.write_all(str.as_bytes()).unwrap();
 
-    String::from_utf8(encoder.get_writer()).unwrap()
+    String::from_utf8(decoder.get_writer()).unwrap()
 }

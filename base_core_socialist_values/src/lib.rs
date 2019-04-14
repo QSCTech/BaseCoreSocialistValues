@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::io::{self, ErrorKind, Read, Write};
 
@@ -17,6 +17,15 @@ lazy_static! {
             map.insert(*word, index);
         }
         map
+    };
+    static ref BYTE_SET: HashSet<&'static u8> = {
+        let mut set = HashSet::new();
+        for word in WORD_SET.iter() {
+            for item in word.as_bytes().iter() {
+                set.insert(item);
+            }
+        }
+        set
     };
 }
 
@@ -230,13 +239,60 @@ impl<W: Write> Write for Encoder<W> {
 
 impl<W: Write> Write for Decoder<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let bytes = self.input_buf.write(buf)?;
+        let mut all_bytes = 0;
+        let mut start_point = 0;
+
+        for i in 0..buf.len() {
+            if BYTE_SET.contains(&buf[i]) {
+                start_point = i;
+                break;
+            } else {
+                if i==buf.len() - 1 {
+                    start_point = buf.len();
+                }
+            }
+        }
+
+        all_bytes += start_point;
+        {
+            let mut i = start_point;
+            'outer: loop {
+                if i == buf.len() {
+                    break;
+                }
+                if !BYTE_SET.contains(&buf[i]) {
+                    if start_point < i {
+                        let bytes = self.input_buf.write(&buf[start_point..i])?;
+                        all_bytes += bytes;
+                        if bytes < i - start_point {
+                            break;
+                        }
+
+                        for pos in i+1..buf.len() {
+                            if BYTE_SET.contains(&buf[pos]) {
+                                i = pos;
+                                all_bytes += pos - start_point;
+                                start_point = pos;
+                                continue 'outer;
+                            } else {
+                                if pos == buf.len() - 1 {
+                                    all_bytes = buf.len();
+                                    break 'outer;
+                                }
+                            }
+                        }
+                    }
+                }
+                i += 1;
+            }
+        }
+
         while self.input_buf.len() >= 18 {
             let mut bytes = [0; 18];
             self.input_buf.read_exact(&mut bytes)?;
             Char::try_from(&bytes)?.decode_into(&mut self.writer)?;
         }
-        Ok(bytes)
+        Ok(all_bytes)
     }
 
     fn flush(&mut self) -> io::Result<()> {

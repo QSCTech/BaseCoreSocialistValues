@@ -267,6 +267,8 @@ impl<W: Write> Write for Decoder<W> {
             let mut i = start_point;
             'outer: loop {
                 if i == buf.len() {
+                    let bytes = self.input_buf.write(&buf[start_point..i])?;
+                    all_bytes += bytes;
                     break;
                 }
                 if !BYTE_SET.contains(&buf[i]) {
